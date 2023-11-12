@@ -3,6 +3,7 @@ import { Button, Divider, Input, Select, SelectItem } from "@nextui-org/react";
 import { Down } from "@icon-park/react";
 import { useMetaMask } from "@/hooks/useMetaMask";
 import { useEffect, useState } from "react";
+import network = chrome.privacy.network;
 
 function NetworkImage(img: string) {
     return (
@@ -54,6 +55,17 @@ export default function SwapCard() {
     useEffect(() => {
         setIsMobile(isMobileDevice());
     }, []);
+
+    const switchNetwork = async (chainID: number) => {
+        await window.ethereum.request({
+            "method": "wallet_switchEthereumChain",
+            "params": [
+                {
+                    "chainId": { chainID }
+                }
+            ]
+        });
+    }
 
     return (
         <div className="flex flex-col items-center justify-center mx-3">
@@ -182,6 +194,7 @@ export default function SwapCard() {
                                             </div>
                                         ))
                                     }}
+                                    onSelect={(event) => console.info(event)}
                                 >
                                     {(network) => (
                                         <SelectItem

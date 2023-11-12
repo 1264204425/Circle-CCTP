@@ -6,13 +6,7 @@ import { useSDK } from "@metamask/sdk-react";
 import { useMetaMask } from "@/hooks/useMetaMask";
 import { formatAddress, formatBalance, formatChainAsNum } from "@/utils/formot";
 import globalData from "@/models/globalData";
-
-// 检测用户是否使用手机
-function isMobileDevice() {
-    console.info("检测设备")
-    console.info(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent))
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
+import { ethers } from "ethers";
 
 export default function ConnectButton() {
 
@@ -39,8 +33,14 @@ export default function ConnectButton() {
                 method: 'eth_getBalance',
                 params: [accounts[0], 'latest']
             });
+            console.info("====================================")
+            console.info(balance);
+
             setBalance(formatBalance(typeof balance === "string" ? balance : balance.toString()));
-            setNetworkInfo(await getNetworkInfo(formatChainAsNum(wallet.chainId)));
+            const chainId: any = await window.ethereum.request({ method: 'eth_chainId' });
+            console.info("当前ChainID", formatChainAsNum(chainId));
+            setNetworkInfo(await getNetworkInfo(formatChainAsNum(String(formatChainAsNum(chainId)))));
+
         } catch (error) {
             sdk?.terminate()
             console.error(error);
@@ -98,23 +98,42 @@ export default function ConnectButton() {
                                         <Button
                                             variant="shadow"
                                             color="primary"
-                                            endContent={<DownSmall theme="multi-color" size="25"
-                                                                   fill={['#ffffff', '#2F88FF', '#FFF', '#43CCF8']}
-                                                                   strokeWidth={2}
-                                                                   strokeLinecap="square"/>}
+                                            // endContent={<DownSmall theme="multi-color" size="25"
+                                            //                        fill={['#ffffff', '#2F88FF', '#FFF', '#43CCF8']}
+                                            //                        strokeWidth={2}
+                                            //                        strokeLinecap="square"/>}
                                         >
-                                            {/*{account.substring(0, 10)}...*/}
-                                            Wallet
+                                            {account.substring(0, 8)}...{account.substring(account.length - 8)}
+                                            {/*Wallet*/}
                                         </Button>
                                     </DropdownTrigger>
                                     <DropdownMenu aria-label="Static Actions">
+                                        <DropdownItem
+                                            key="chainName"
+                                            isDisabled={true}
+                                            textValue={"chainName"}
+                                        >
+                                            <div className="flex flex-row">
+                                                <span>Network: </span>
+                                                <span>{networkInfo.chainName}</span>
+                                            </div>
+                                        </DropdownItem>
+                                        <DropdownItem
+                                            key="coinPrice"
+                                            isDisabled={true}
+                                            textValue={"coinPrice"}
+                                        >
+                                            <div className="flex flex-row">
+                                                <span>{networkInfo.coinSymbol} Price:{networkInfo.coinPrice}</span>
+                                            </div>
+                                        </DropdownItem>
                                         <DropdownItem
                                             key="address"
                                             isDisabled={true}
                                             textValue={account && `${account.substring(0, 5)}...${account.substring(account.length - 5)}`}
                                         >
                                             <div className="flex flex-row">
-                                                <span>Address:</span>
+                                                <span>Address: </span>
                                                 <span>{account && `${account.substring(0, 5)}...${account.substring(account.length - 5)}`}</span>
                                             </div>
                                         </DropdownItem>
@@ -124,7 +143,7 @@ export default function ConnectButton() {
                                             textValue={balance}
                                         >
                                             <div className="flex flex-row">
-                                                <span>Balance:</span>
+                                                <span>Balance: </span>
                                                 <span>{balance}{networkInfo.coinSymbol}</span>
                                             </div>
                                         </DropdownItem>
@@ -162,8 +181,8 @@ export default function ConnectButton() {
                                 Connect Wallet
                             </Button>
                         </>)}
-                </>)}
-
+                </>)
+            }
         </>
     )
 }
