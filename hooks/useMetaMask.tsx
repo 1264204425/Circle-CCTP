@@ -33,28 +33,38 @@ export const MetaMaskContextProvider = ({ children }: PropsWithChildren) => {
     const [wallet, setWallet] = useState(disconnectedState)
     // useCallback ensures that you don't uselessly recreate the _updateWallet function on every render
     const _updateWallet = useCallback(async (providedAccounts?: any) => {
-        const accounts = providedAccounts || await window.ethereum.request(
-            { method: 'eth_accounts' },
-        )
-
-        if (accounts.length === 0) {
-            // If there are no accounts, then the user is disconnected
-            setWallet(disconnectedState)
-            return
+        if (!window.ethereum) {
+            console.error("MetaMask is not installed.");
+            // 这里可以设置应用状态，提示用户安装 MetaMask
+            setWallet(disconnectedState);
+            return;
         }
 
-        // @ts-ignore
-        const balance = formatBalance(await window.ethereum.request({
-            method: 'eth_getBalance',
-            params: [accounts[0], 'latest'],
-        }))
+        try {
+            const accounts = providedAccounts || await window.ethereum.request(
+                { method: 'eth_accounts' }
+            );
 
-        const chainId = await window.ethereum.request({
-            method: 'eth_chainId',
-        })
+            if (accounts.length === 0) {
+                // If there are no accounts, then the user is disconnected
+                setWallet(disconnectedState)
+                return
+            }
 
-        // @ts-ignore
-        setWallet({ accounts, balance, chainId })
+            // @ts-ignore
+            const balance = formatBalance(await window.ethereum.request({
+                method: 'eth_getBalance',
+                params: [accounts[0], 'latest'],
+            }))
+
+            const chainId = await window.ethereum.request({
+                method: 'eth_chainId',
+            })
+            // @ts-ignore
+            setWallet({ accounts, balance, chainId })
+        } catch (e) {
+            console.error(e)
+        }
     }, [])
 
     const updateWalletAndAccounts = useCallback(() => _updateWallet(), [_updateWallet])

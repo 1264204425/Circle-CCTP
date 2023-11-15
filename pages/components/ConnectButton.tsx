@@ -1,70 +1,177 @@
 import { Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from "@nextui-org/react";
 import React, { useEffect, useState } from "react";
-import { DownSmall, DropDownList, Unlink, WalletThree } from "@icon-park/react";
-import { disconnectWallet, getCoinSymbol, getNetworkInfo } from "@/components/connectWallet";
+import { Unlink } from "@icon-park/react";
+import { connectMetaMask, getNetworkInfo, initContract, readContract } from "@/components/connectWallet";
 import { useSDK } from "@metamask/sdk-react";
-import { useMetaMask } from "@/hooks/useMetaMask";
 import { formatAddress, formatBalance, formatChainAsNum } from "@/utils/formot";
 import globalData from "@/models/globalData";
 import { ethers } from "ethers";
+import { useDispatch, useSelector } from "react-redux";
+import {
+    selectAddress,
+    selectBalance,
+    selectChainID,
+    selectChainName,
+    selectCoinPrice,
+    selectCoinSymbol,
+    selectCoinUSDCPair,
+    selectErc20Token,
+    selectIsFinished,
+    selectMessageTransmitterAddr,
+    selectRouterAddress,
+    selectScanApiKey,
+    selectScanApiURL,
+    selectScanURLL,
+    selectTokenMessengerAddr,
+    selectUSDCAddress,
+    selectUSDCProxyAddress, selectUSDCTokenInfo,
+    selectWrappedCoinAddress,
+    setAddress,
+    setBalance,
+    setChainID,
+    setChainName,
+    setCoinPrice,
+    setCoinSymbol,
+    setCoinUSDCPair,
+    setIsFinished,
+    setMessageTransmitterAddr,
+    setRouterAddress,
+    setScanApiKey,
+    setScanApiURL,
+    setScanURLL,
+    setTokenMessengerAddr,
+    setUSDCAddress,
+    setUSDCProxyAddress,
+    setWrappedCoinAddress
+} from "@/redux/store";
+import getCoinPrice from "@/utils/getCoinPrice";
 
 export default function ConnectButton() {
 
     const [loading, setLoading] = useState(false)
     const [account, setAccount] = useState<any>()
     const [networkInfo, setNetworkInfo] = useState(null)
-    const [balance, setBalance] = useState<string>()
 
     // metamask
     const { sdk, connected, connecting, provider } = useSDK();
 
-    // const { balance, hexChainId, numericChainId } = useBalances()
-    const { wallet } = useMetaMask()
+    // 全局变量
+    const dispatch = useDispatch();
+    const chainName = useSelector(selectChainName);
+    const coinSymbol = useSelector(selectCoinSymbol);
+    const chainID = useSelector(selectChainID)
+    const scanURLL = useSelector(selectScanURLL)
+    const coinPrice = useSelector(selectCoinPrice);
+    const coinUSDCPair = useSelector(selectCoinUSDCPair);
+    const balance = useSelector(selectBalance)
+    const wrappedCoinAddress = useSelector(selectWrappedCoinAddress)
+    const USDCProxyAddress = useSelector(selectUSDCProxyAddress)
+    const USDCAddress = useSelector(selectUSDCAddress)
+    const scanApiURL = useSelector(selectScanApiURL)
+    const scanApiKey = useSelector(selectScanApiKey)
+    const routerAddress = useSelector(selectRouterAddress)
+    const tokenMessengerAddr = useSelector(selectTokenMessengerAddr)
+    const isFinished = useSelector(selectIsFinished)
+    const erc20Token = useSelector(selectErc20Token)
+    const messageTransmitterAddr = useSelector(selectMessageTransmitterAddr)
+    const routerContract = useSelector(selectRouterAddress)
+    const USDCTokenInfo = useSelector(selectUSDCTokenInfo)
+
 
     const onConnectMetaMask = async () => {
         try {
-            const accounts = await sdk?.connect();
+            const accounts = sdk?.connect()
+            setAccount(accounts[0])
             setLoading(true)
-            console.info(accounts);
 
-            setAccount(accounts?.[0]);
+            if (account) {
+                const balance = await window.ethereum.request({
+                    method: 'eth_getBalance',
+                    params: [account, 'latest']
+                });
+                console.info(balance);
+                dispatch(setAddress(account)) // redux
+                dispatch(setBalance(formatBalance(typeof balance === "string" ? balance : balance.toString())));
 
-            const balance = await window.ethereum.request({
-                method: 'eth_getBalance',
-                params: [accounts[0], 'latest']
-            });
-            console.info("====================================")
-            console.info(balance);
+                let chainID: any = await window.ethereum.request({ method: 'eth_chainId' });
+                console.info(chainID);
+                console.info("格式化后的", formatChainAsNum(chainID))
+                dispatch(setChainID(formatChainAsNum(chainID)))
 
-            setBalance(formatBalance(typeof balance === "string" ? balance : balance.toString()));
-            const chainId: any = await window.ethereum.request({ method: 'eth_chainId' });
-            console.info("当前ChainID", formatChainAsNum(chainId));
-            setNetworkInfo(await getNetworkInfo(formatChainAsNum(String(formatChainAsNum(chainId)))));
-
+                setNetworkInfo(await getNetworkInfo(formatChainAsNum(chainID)));
+                await getNetworkInfo(formatChainAsNum(chainID)).then(
+                    (res) => {
+                        console.info(res)
+                        dispatch(setCoinUSDCPair(res.coinUSDCPair))
+                        dispatch(setCoinSymbol(res.coinSymbol))
+                        dispatch(setChainName(res.chainName))
+                        dispatch(setCoinUSDCPair(res.coinUSDCPair))
+                        dispatch(setUSDCProxyAddress(res.USDCProxyAddress))
+                        dispatch(setUSDCAddress(res.USDCAddress))
+                        dispatch(setRouterAddress(res.RouterAddress))
+                        dispatch(setWrappedCoinAddress(res.WrappedCoinAddress))
+                        dispatch(setTokenMessengerAddr(res.TokenMessengerAddr))
+                        dispatch(setMessageTransmitterAddr(res.MessageTransmitterAddr))
+                        dispatch(setScanApiURL(res.scanApiURL))
+                        dispatch(setScanURLL(res.scanURL))
+                        dispatch(setScanApiKey(res.scanApiKey))
+                        dispatch(setIsFinished(true))
+                    }
+                )
+                console.info("***********************************")
+                console.info(USDCProxyAddress, scanApiURL, USDCAddress, scanApiKey, routerAddress, tokenMessengerAddr)
+                // await initContract(
+                //     USDCProxyAddress,
+                //     scanApiURL,
+                //     USDCAddress,
+                //     scanApiKey,
+                //     routerAddress,
+                //     tokenMessengerAddr).then(
+                //     async (res) => {
+                //         console.info("***********************************")
+                //         console.info(res)
+                //         console.info(res.erc20Token)
+                //         dispatch(selectErc20Token(res.erc20Token))
+                //         dispatch(selectRouterAddress(res.routerContract))
+                //         dispatch(selectTokenMessengerAddr(res.TokenMessagerContract))
+                //         await readContract(res.erc20Token, account).then(
+                //             (res) => {
+                //                 console.info(res)
+                //                 dispatch(selectUSDCTokenInfo(res))
+                //             })
+                //     }
+                // )
+                // console.info("***********************************")
+                // console.info(erc20Token)
+                await getCoinPrice(coinUSDCPair).then(
+                    (res) => {
+                        console.info("当前价格", res)
+                        dispatch(setCoinPrice(res))
+                    }
+                )
+            }
         } catch (error) {
             sdk?.terminate()
             console.error(error);
         } finally {
-            await new Promise((resolve) => setTimeout(resolve, 2000));
             setLoading(false)
         }
     }
-
     const onDisconnectMetaMask = () => {
         // 断开连接
         sdk?.terminate()
-        disconnectWallet().then(() =>
-            setAccount("")
-        )
+        setAccount("")
     };
 
     useEffect(() => {
-        async function getLoader() {
-            const { trio } = await import('ldrs')
-            trio.register()
+        if (chainName) {
+            getCoinPrice(coinUSDCPair).then(
+                (res) => {
+                    console.info("当前价格", res)
+                    dispatch(setCoinPrice(res))
+                }
+            )
         }
-
-        getLoader()
     }, []);
 
     return (
@@ -77,15 +184,7 @@ export default function ConnectButton() {
                         size="md"
                         onClick={onConnectMetaMask}
                         isDisabled={true}
-                        startContent={
-                            <>
-                                <l-trio
-                                    size="20"
-                                    speed="1.3"
-                                    color="#2F88FF"
-                                ></l-trio>
-                            </>
-                        }
+                        isLoading={loading}
                     >
                         Connect Wallet
                     </Button>
@@ -98,11 +197,8 @@ export default function ConnectButton() {
                                         <Button
                                             variant="shadow"
                                             color="primary"
-                                            // endContent={<DownSmall theme="multi-color" size="25"
-                                            //                        fill={['#ffffff', '#2F88FF', '#FFF', '#43CCF8']}
-                                            //                        strokeWidth={2}
-                                            //                        strokeLinecap="square"/>}
                                         >
+                                            {account}
                                             {account.substring(0, 8)}...{account.substring(account.length - 8)}
                                             {/*Wallet*/}
                                         </Button>
@@ -115,7 +211,7 @@ export default function ConnectButton() {
                                         >
                                             <div className="flex flex-row">
                                                 <span>Network: </span>
-                                                <span>{networkInfo.chainName}</span>
+                                                <span>{chainName}</span>
                                             </div>
                                         </DropdownItem>
                                         <DropdownItem
@@ -124,7 +220,7 @@ export default function ConnectButton() {
                                             textValue={"coinPrice"}
                                         >
                                             <div className="flex flex-row">
-                                                <span>{networkInfo.coinSymbol} Price:{networkInfo.coinPrice}</span>
+                                                <span>{coinSymbol} Price:{coinPrice ? coinPrice : "Error Restart..."}</span>
                                             </div>
                                         </DropdownItem>
                                         <DropdownItem
@@ -144,7 +240,7 @@ export default function ConnectButton() {
                                         >
                                             <div className="flex flex-row">
                                                 <span>Balance: </span>
-                                                <span>{balance}{networkInfo.coinSymbol}</span>
+                                                <span>{balance}{coinSymbol}</span>
                                             </div>
                                         </DropdownItem>
                                         <DropdownItem

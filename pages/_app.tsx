@@ -5,6 +5,8 @@ import { fontSans, fontMono } from "@/config/fonts";
 import type { AppProps } from "next/app";
 import { MetaMaskProvider } from '@metamask/sdk-react';
 import { MetaMaskContextProvider } from "@/hooks/useMetaMask";
+import { Provider } from "react-redux";
+import store from "@/redux/store";
 
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -19,7 +21,9 @@ export default function App({ Component, pageProps }: AppProps) {
             }}>
                 <NextUIProvider>
                     <NextThemesProvider>
-                        <Component {...pageProps} />
+                        <Provider store={store}>
+                            <Component {...pageProps} />
+                        </Provider>
                     </NextThemesProvider>
                 </NextUIProvider>
             </MetaMaskProvider>

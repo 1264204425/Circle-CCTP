@@ -2,8 +2,6 @@ import React from "react";
 import { Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button } from "@nextui-org/react";
 import { AcmeLogo } from "@/components/AcmeLogo";
 import ConnectButton from "@/pages/components/ConnectButton";
-import switchNetwork from "@/components/switchNetwork";
-import SwitchNetwork from "@/pages/components/SwitchNetwork";
 
 export default function IndexFrame() {
     return (
@@ -14,15 +12,15 @@ export default function IndexFrame() {
             </NavbarBrand>
             <NavbarContent className="hidden sm:flex" justify="start">
                 <NavbarItem isActive>
-                    <Link href="#" aria-current="page">
-                        Free Gas
+                    <Link href="#" aria-current="page" color={"foreground"}>
+                        Intra-chain Swap
                     </Link>
                 </NavbarItem>
-                {/*<NavbarItem isActive>*/}
-                {/*    <Link href="#" aria-current="page">*/}
-                {/*        Customers*/}
-                {/*    </Link>*/}
-                {/*</NavbarItem>*/}
+                <NavbarItem>
+                    <Link href="#" aria-current="page" color={"foreground"}>
+                        Cross-chain Swap
+                    </Link>
+                </NavbarItem>
                 {/*<NavbarItem>*/}
                 {/*    <Link color="foreground" href="#">*/}
                 {/*        Integrations*/}

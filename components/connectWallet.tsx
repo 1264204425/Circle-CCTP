@@ -2,8 +2,9 @@ import { ethers } from "ethers";
 import globalData from "@/models/globalData";
 import { useSDK } from "@metamask/sdk-react";
 import { SDKProvider } from "@metamask/sdk";
-import getContractABI from "@/components/getContractABI";
 import getCoinPrice from "@/utils/getCoinPrice";
+import getContractABI from "@/components/getContractABI";
+import { err } from "pino-std-serializers";
 
 const initialGlobalData: globalData = {
     account: null,
@@ -52,23 +53,6 @@ const contractInfo: any = {
     TokenMessagerContract: '',
 };
 
-
-export async function disconnectWallet() {
-    try {
-        initialGlobalData.account = null; // 清除帐户信息
-        initialGlobalData.connectedBool = false; // 将连接状态设置为false
-        initialGlobalData.chainName = null; // 清除链名称
-        initialGlobalData.coinSymbol = null; // 清除代币符号
-
-        console.info("断开连接", initialGlobalData)
-        console.info("Disconnected from wallet");
-
-    } catch (error) {
-        console.error("Error disconnecting from wallet:", error);
-    }
-}
-
-
 export function getCoinSymbol(chainId: number, networkInfo: any) {
     const ethChains = [1, 5, 10, 420, 42161, 8453, 84531];
     const avaxChains = [43114, 43113];
@@ -93,12 +77,16 @@ export function getCoinSymbol(chainId: number, networkInfo: any) {
 }
 
 export async function getNetworkInfo(chainId: number) {
+
+    const ETHERSCAN_API_KEY = "FG1HVQPZ313318ZH29Y6W7KSWB3XGAKMI9"
+    const SNOWTRACE_API_KEY = "SZRTR9HGYY5CCC1UIA8TX2J4NGA8AFA3TZ"
+    const OPTIMISMSCAN_API_KEY = "JG8ZQKKWN67NEGQQBF94E1J255NCUNZ1MP"
     switch (chainId) {
         // mainnet
         case 1:
-            networkInfo.chainName = 'Ethereum Mainnet';
-            networkInfo.scanApiKey = process.env.ETHERSCAN_API_KEY;
-            // networkInfo.scanRPCURL = process..env.ETHEREUM_RPC_URL;
+            networkInfo.chainName = 'Ethereum Mainnet' //'Ethereum Mainnet';
+            networkInfo.scanApiKey = 'FG1HVQPZ313318ZH29Y6W7KSWB3XGAKMI9';
+            // networkInfo.scanRPCURL = process.apikey.tsx.ETHEREUM_RPC_URL;
             networkInfo.USDCProxyAddress = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
             networkInfo.USDCAddress = '0xa2327a938Febf5FEC13baCFb16Ae10EcBc4cbDCF';
             networkInfo.RouterAddress = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D';
@@ -110,8 +98,8 @@ export async function getNetworkInfo(chainId: number) {
             break;
         case 43114:
             networkInfo.chainName = 'Avalanche C-Chain';
-            networkInfo.scanApiKey = process.env.SNOWTRACE_API_KEY;
-            // networkInfo.scanRPCURL = process..env.AVALANCHE_RPC_URL;
+            networkInfo.scanApiKey = 'SZRTR9HGYY5CCC1UIA8TX2J4NGA8AFA3TZ';
+            // networkInfo.scanRPCURL = process.apikey.tsx.AVALANCHE_RPC_URL;
             networkInfo.USDCProxyAddress = '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E';
             networkInfo.USDCAddress = '0xa3fa3D254bf6aF295b5B22cC6730b04144314890';
             networkInfo.RouterAddress = '0x60ae616a2155ee3d9a68541ba4544862310933d4';
@@ -123,8 +111,8 @@ export async function getNetworkInfo(chainId: number) {
             break;
         case 10:
             networkInfo.chainName = 'Optimism Mainnet';
-            networkInfo.scanApiKey = process.env.OPTIMISMSCAN_API_KEY;
-            // networkInfo.scanRPCURL = process..env.OPTIMISM_RPC_URL;
+            networkInfo.scanApiKey = 'JG8ZQKKWN67NEGQQBF94E1J255NCUNZ1MP';
+            // networkInfo.scanRPCURL = process.apikey.tsx.OPTIMISM_RPC_URL;
             networkInfo.USDCProxyAddress = '0x0b2c639c533813f4aa9d7837caf62653d097ff85';
             networkInfo.USDCAddress = '0xbd17DEee53a58B48548117a11a2E7bbF2D0d6Fa7';
             networkInfo.RouterAddress = '0xa062aE8A9c5e11aaA026fc2670B0D65cCc8B2858';
@@ -137,7 +125,7 @@ export async function getNetworkInfo(chainId: number) {
         case 42161:
             networkInfo.chainName = 'Arbitrum One';
             networkInfo.scanApiKey = process.env.ARBISCAN_API_KEY;
-            // networkInfo.scanRPCURL = process..env.ARBITRUM_RPC_URL;
+            // networkInfo.scanRPCURL = process.apikey.tsx.ARBITRUM_RPC_URL;
             networkInfo.USDCProxyAddress = '0xaf88d065e77c8cc2239327c5edb3a432268e5831';
             networkInfo.USDCAddress = '0x0f4fb9474303d10905AB86aA8d5A65FE44b6E04A';
             networkInfo.RouterAddress = '0xbeE5c10Cf6E4F68f831E11C1D9E59B43560B3642';
@@ -150,7 +138,7 @@ export async function getNetworkInfo(chainId: number) {
         case 8453:
             networkInfo.chainName = 'Base';
             this.scanApiKey = process.env.BASE_API_KEY;
-            // this.scanRPCURL = process..env.BASE_RPC_URL;
+            // this.scanRPCURL = process.apikey.tsx.BASE_RPC_URL;
             networkInfo.USDCProxyAddress = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
             networkInfo.USDCAddress = '0x6D0c9A70D85E42Ba8B76dc06620d4E988ec8D0C1';
             networkInfo.RouterAddress = '0x327Df1E6de05895d2ab08513aaDD9313Fe505d86';
@@ -163,8 +151,8 @@ export async function getNetworkInfo(chainId: number) {
         // testnet
         case 5:
             networkInfo.chainName = 'Ethereum-Goerli';
-            networkInfo.scanApiKey = process.env.ETHERSCAN_API_KEY;
-            // networkInfo.scanRPCURL = process..env.ETHEREUM_GOERLI_RPC_URL;
+            networkInfo.scanApiKey = 'FG1HVQPZ313318ZH29Y6W7KSWB3XGAKMI9';
+            // networkInfo.scanRPCURL = process.apikey.tsx.ETHEREUM_GOERLI_RPC_URL;
             networkInfo.USDCProxyAddress = '0x07865c6E87B9F70255377e024ace6630C1Eaa37F';
             networkInfo.USDCAddress = '0xe27658a36cA8A59fE5Cc76a14Bde34a51e587ab4';
             networkInfo.RouterAddress = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D';
@@ -176,8 +164,8 @@ export async function getNetworkInfo(chainId: number) {
             break;
         case 43113:
             networkInfo.chainName = 'Avalanche-Fuji';
-            networkInfo.scanApiKey = process.env.SNOWTRACE_API_KEY;
-            // networkInfo.scanRPCURL = process..env.AVALANCHE_FUJI_RPC_URL;
+            networkInfo.scanApiKey = 'SZRTR9HGYY5CCC1UIA8TX2J4NGA8AFA3TZ';
+            // networkInfo.scanRPCURL = process.apikey.tsx.AVALANCHE_FUJI_RPC_URL;
             networkInfo.USDCProxyAddress = '0x5425890298aed601595a70ab815c96711a31bc65';
             networkInfo.USDCAddress = '0x79beb0a978443dBc125599170332b3F40D448F63';
             networkInfo.RouterAddress = '0x3705aBF712ccD4fc56Ee76f0BD3009FD4013ad75';
@@ -189,8 +177,8 @@ export async function getNetworkInfo(chainId: number) {
             break;
         case 420:
             networkInfo.chainName = 'Optimism-Goerli';
-            networkInfo.scanApiKey = process.env.OPTIMISMSCAN_API_KEY;
-            // networkInfo.scanRPCURL = process..env.OPTIMISM_GOERLI_RPC_URL;
+            networkInfo.scanApiKey = 'JG8ZQKKWN67NEGQQBF94E1J255NCUNZ1MP';
+            // networkInfo.scanRPCURL = process.apikey.tsx.OPTIMISM_GOERLI_RPC_URL;
             networkInfo.USDCProxyAddress = '0xe05606174bac4a6364b31bd0eca4bf4dd368f8c6';
             networkInfo.USDCAddress = '0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85';
             networkInfo.RouterAddress = '0x8F1f2A89930dC9aaa7B5a799AC695dF809B0fbe5';
@@ -203,7 +191,7 @@ export async function getNetworkInfo(chainId: number) {
         case 421613:
             networkInfo.chainName = 'Arbitrum-Goerli';
             networkInfo.scanApiKey = process.env.ARBISCAN_API_KEY;
-            // networkInfo.scanRPCURL = process..env.ARBITRUM_GOERLI_RPC_URL;
+            // networkInfo.scanRPCURL = process.apikey.tsx.ARBITRUM_GOERLI_RPC_URL;
             networkInfo.USDCProxyAddress = '0xfd064A18f3BF249cf1f87FC203E90D8f650f2d63';
             networkInfo.USDCAddress = '0xC042E9E8cE7eB153a9B3113F91ABbF1065dfC44e';
             networkInfo.RouterAddress = '0x81cD91B6BD7D275a7AeebBA15929AE0f0751d18C';
@@ -216,7 +204,7 @@ export async function getNetworkInfo(chainId: number) {
         case 84531:
             networkInfo.chainName = 'Base-Goerli';
             networkInfo.scanApiKey = process.env.BASE_API_KEY;
-            // networkInfo.scanRPCURL = process..env.BASE_GOERLI_RPC_URL;
+            // networkInfo.scanRPCURL = process.apikey.tsx.BASE_GOERLI_RPC_URL;
             networkInfo.USDCProxyAddress = '0xf175520c52418dfe19c8098071a252da48cd1c19';
             networkInfo.USDCAddress = '0x057B113c020cA7Be92DE51591c2BcB99976F8A2c';
             networkInfo.RouterAddress = '0x9E3A2a71a5134EA25b547C3EE9131192da7B3DE5';
@@ -229,43 +217,76 @@ export async function getNetworkInfo(chainId: number) {
     }
 
     getCoinSymbol(chainId, networkInfo)
-    getCoinPrice(networkInfo.coinUSDCPair).then(
-        (r) => {
-            networkInfo.coinPrice = r;
-        }
-    )
-    console.info(initialGlobalData)
 
     return networkInfo
 }
 
-export async function initAccount() {
+export async function initContract(USDCProxyAddress: any, scanApiURL: any, USDCAddress: any, scanApiKey: any, RouterAddress: any, TokenMessengerAddr: any) {
     try {
-        if (window.ethereum) {
-            this.accounts = await this.provider.send("eth_requestAccounts", []);
-            this.account = this.accounts[0];
-            this.signer = this.provider.getSigner();
-        } else {
-            this.errorMessage = 'window.ethereum failed, check if the wallet is connected.';
-            console.log(this.errorMessage);
-        }
-    } catch (error) {
-        console.log(error);
+        console.info(USDCProxyAddress, scanApiURL, USDCAddress, scanApiKey, RouterAddress, TokenMessengerAddr)
+        // @ts-ignore
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner()
+        contractInfo.erc20Token = new ethers.Contract(USDCProxyAddress, await getContractABI(scanApiURL, USDCAddress, scanApiKey), signer);
+        contractInfo.routerContract = new ethers.Contract(RouterAddress, await getContractABI(scanApiURL, RouterAddress, scanApiKey), signer);
+        contractInfo.TokenMessagerContract = new ethers.Contract(TokenMessengerAddr, await getContractABI(scanApiURL, TokenMessengerAddr, scanApiKey), signer);
+    } catch (e) {
+        console.error(e)
     }
+
+    return contractInfo
 }
 
-export async function initContract(networkInfo: any) {
-    const provider = new ethers.providers.JsonRpcProvider(networkInfo.scanRPCURL);
-    const signer = provider.getSigner()
-    contractInfo.erc20Token = new ethers.Contract(networkInfo.USDCProxyAddress, await getContractABI(networkInfo.scanApiURL, networkInfo.USDCAddress, networkInfo.scanApiKey), signer);
-    contractInfo.routerContract = new ethers.Contract(networkInfo.RouterAddress, await getContractABI(networkInfo.scanApiURL, networkInfo.RouterAddress, networkInfo.scanApiKey), signer);
-    contractInfo.TokenMessagerContract = new ethers.Contract(networkInfo.TokenMessengerAddr, await this.getContractABI(networkInfo.scanApiURL, networkInfo.TokenMessengerAddr, networkInfo.scanApiKey), signer);
+export async function readContract(erc20Token: any, account: any) {
+    console.info("我在读取合约")
+    console.info("当前的地址", account)
+    const USDCTokenInfo: any = {
+        name: "",
+        decimal: "",
+        symbol: "",
+        supply: "",
+        tokenBalance: "",
+    }
+    try {
+        USDCTokenInfo.name = await erc20Token.name();
+        USDCTokenInfo.decimal = await erc20Token.decimals();
+        USDCTokenInfo.symbol = await erc20Token.symbol();
+        const totalSupply = await erc20Token.totalSupply();
+        USDCTokenInfo.supply = ethers.utils.formatUnits(totalSupply, USDCTokenInfo.decimal);
+        const balance = await erc20Token.balanceOf(account);
+        USDCTokenInfo.tokenBalance = ethers.utils.formatUnits(balance, USDCTokenInfo.decimal);
+        // await contractInfo.erc20Token.name().then((r) => {
+        //     USDCTokenInfo.name = r;
+        // })
+        // await contractInfo.erc20Token.decimals().then((r) => {
+        //     USDCTokenInfo.decimal = r;
+        // })
+        // await contractInfo.erc20Token.symbol().then((r) => {
+        //     USDCTokenInfo.symbol = r;
+        // })
+        // await contractInfo.erc20Token.totalSupply().then((r) => {
+        //     USDCTokenInfo.supply = ethers.utils.formatUnits(r, USDCTokenInfo.decimal);
+        // })
+        //
+        // await contractInfo.erc20Token.balanceOf(account).then((r) => {
+        //     USDCTokenInfo.tokenBalance = ethers.utils.formatUnits(r, USDCTokenInfo.decimal);
+        // })
+    } catch (e) {
+        console.error("readContract error", e)
+    }
+
+
+    return USDCTokenInfo
 }
 
-export async function readContract() {
-    const provider = new ethers.providers.JsonRpcProvider(networkInfo.scanRPCURL);
-    // provider.getBalance(this.account).then((r) => {
-    //     this.coinBalance = ethers.utils.formatUnits(r, 18);
-    // });
 
+export async function connectMetaMask() {
+    if (window.ethereum) { // 检查 window.ethereum 是否存在
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        // 连接成功后，accounts 变量将包含用户钱包地址的数组
+        return accounts
+    } else {
+        // 如果 window.ethereum 不存在，提示用户安装 MetaMask
+        return "Please install MetaMask!"
+    }
 }
